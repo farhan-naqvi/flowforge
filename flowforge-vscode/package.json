@@ -1,0 +1,80 @@
+{
+  "name": "flowforge-vscode",
+  "displayName": "FlowForge Pipeline Generator",
+  "description": "Generate Argo Workflows YAML and Airflow DAGs from annotated Python pipelines.",
+  "version": "0.0.1",
+  "publisher": "flowforge",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:flowforge.generateArgoWorkflow",
+    "onCommand:flowforge.generateAirflowDag",
+    "onCommand:flowforge.previewDag"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "flowforge.generateArgoWorkflow",
+        "title": "Generate Argo Workflow"
+      },
+      {
+        "command": "flowforge.generateAirflowDag",
+        "title": "Generate Airflow DAG"
+      },
+      {
+        "command": "flowforge.previewDag",
+        "title": "Preview FlowForge DAG"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "flowforge.generateArgoWorkflow",
+          "when": "resourceExtname == .py",
+          "group": "navigation@50"
+        },
+        {
+          "command": "flowforge.generateAirflowDag",
+          "when": "resourceExtname == .py",
+          "group": "navigation@51"
+        },
+        {
+          "command": "flowforge.previewDag",
+          "when": "resourceExtname == .py",
+          "group": "navigation@52"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "flowforge.generateArgoWorkflow",
+          "when": "resourceExtname == .py",
+          "group": "navigation@50"
+        },
+        {
+          "command": "flowforge.generateAirflowDag",
+          "when": "resourceExtname == .py",
+          "group": "navigation@51"
+        },
+        {
+          "command": "flowforge.previewDag",
+          "when": "resourceExtname == .py",
+          "group": "navigation@52"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  }
+}

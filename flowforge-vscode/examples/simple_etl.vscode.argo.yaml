@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: etl
+  namespace: default
+spec:
+  activeDeadlineSeconds: 3600
+  entrypoint: etl
+  templates:
+  - name: etl
+    dag:
+      tasks:
+      - name: extract
+        template: extract
+      - name: transform
+        template: transform
+        dependencies: [extract]
+  - name: extract
+    container:
+      image: python:3.11
+      command: ["python", "extract.py"]
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "100m"
+    retryStrategy:
+      limit: 3
+  - name: transform
+    container:
+      image: python:3.11
+      command: ["python", "transform.py"]
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "100m"
