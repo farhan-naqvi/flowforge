@@ -1,0 +1,77 @@
+{
+  "apiVersion": "flowforge.io/v1",
+  "kind": "Pipeline",
+  "metadata": {
+    "name": "data-quality-check",
+    "version": "1.0.0",
+    "owner": "data_governance",
+    "description": "Data Quality: Extract → Validate → {Pass: Load, Fail: Notify}"
+  },
+  "tasks": {
+    "extract": {
+      "type": "Source",
+      "handler": {
+        "type": "python",
+        "source": "read_csv('data.csv')"
+      },
+      "description": "Extract data from CSV",
+      "outputs": {
+        "records": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      }
+    },
+    "validate": {
+      "type": "Conditional",
+      "handler": {
+        "type": "python",
+        "source": "check_data_quality(data); return {pass: null_count == 0, fail: null_count > 0}"
+      },
+      "description": "Validate data quality (no nulls)",
+      "inputs": {
+        "records": {"type": "array", "items": {"type": "object"}}
+      },
+      "outputs": {
+        "pass": {"type": "array", "items": {"type": "object"}},
+        "fail": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "load_valid": {
+      "type": "Sink",
+      "handler": {
+        "type": "python",
+        "source": "write_to_warehouse(data)"
+      },
+      "description": "Load valid data",
+      "inputs": {
+        "records": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "notify_failure": {
+      "type": "Sink",
+      "handler": {
+        "type": "python",
+        "source": "send_alert('Data quality check failed', bad_records)"
+      },
+      "description": "Send alert for failed records",
+      "inputs": {
+        "records": {"type": "array", "items": {"type": "object"}}
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": {"task": "extract", "port": "records"},
+      "to": {"task": "validate", "port": "records"}
+    },
+    {
+      "from": {"task": "validate", "port": "pass"},
+      "to": {"task": "load_valid", "port": "records"}
+    },
+    {
+      "from": {"task": "validate", "port": "fail"},
+      "to": {"task": "notify_failure", "port": "records"}
+    }
+  ]
+}

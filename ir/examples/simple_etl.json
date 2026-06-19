@@ -1,0 +1,111 @@
+{
+  "apiVersion": "flowforge.io/v1",
+  "kind": "Pipeline",
+  "metadata": {
+    "name": "simple-etl",
+    "version": "1.0.0",
+    "owner": "data_team",
+    "description": "Simple ETL: Extract → Transform → Load"
+  },
+  "tasks": {
+    "extract": {
+      "type": "Source",
+      "handler": {
+        "type": "python",
+        "source": "import boto3; s3 = boto3.client('s3'); data = s3.get_object(Bucket='data-bucket', Key='input.json')"
+      },
+      "description": "Extract data from S3",
+      "outputs": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "name": {"type": "string"},
+              "value": {"type": "number"}
+            }
+          }
+        }
+      },
+      "costEstimate": {
+        "compute": {"unit": "cpu-second", "quantity": 10},
+        "storage": {"unit": "GB-in", "quantity": 0.5}
+      }
+    },
+    "transform": {
+      "type": "Transform",
+      "handler": {
+        "type": "python",
+        "source": "import pandas as pd; df = pd.DataFrame(data); df['value'] = df['value'] * 2; return df.to_dict('records')"
+      },
+      "description": "Double all values",
+      "inputs": {
+        "records": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      },
+      "outputs": {
+        "result": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "name": {"type": "string"},
+              "value": {"type": "number"}
+            }
+          }
+        }
+      },
+      "retry": {
+        "maxAttempts": 3,
+        "backoff": "exponential",
+        "backoffMultiplier": 2.0,
+        "initialDelaySeconds": 5
+      },
+      "timeout": "3600s",
+      "costEstimate": {
+        "compute": {"unit": "cpu-second", "quantity": 30}
+      }
+    },
+    "load": {
+      "type": "Sink",
+      "handler": {
+        "type": "python",
+        "source": "import psycopg2; conn = psycopg2.connect(dbname='warehouse'); cur = conn.cursor(); cur.executemany('INSERT INTO table VALUES (%s, %s, %s)', data); conn.commit()"
+      },
+      "description": "Load to Postgres warehouse",
+      "inputs": {
+        "data": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      },
+      "executorConfig": {
+        "argo": {
+          "image": "python:3.11",
+          "resources": {
+            "requests": {"cpu": "1", "memory": "2Gi"},
+            "limits": {"cpu": "2", "memory": "4Gi"}
+          }
+        },
+        "airflow": {
+          "pool": "postgres_write",
+          "pool_slots": 2
+        }
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": {"task": "extract", "port": "records"},
+      "to": {"task": "transform", "port": "records"}
+    },
+    {
+      "from": {"task": "transform", "port": "result"},
+      "to": {"task": "load", "port": "data"}
+    }
+  ]
+}

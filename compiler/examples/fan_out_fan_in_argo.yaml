@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: fan_out_fan_in
+  namespace: default
+spec:
+  entrypoint: fan_out_fan_in
+  templates:
+  - name: fan_out_fan_in
+    dag:
+      tasks:
+      - name: source
+        template: source
+      - name: process_a
+        template: process_a
+        dependencies: source
+      - name: process_b
+        template: process_b
+        dependencies: source
+      - name: merge
+        template: merge
+        dependencies: "process_a, process_b"
+  - name: source
+    container:
+      image: python:3.11
+      command: ["python", "source.py"]
+  - name: process_a
+    container:
+      image: python:3.11
+      command: ["python", "process_a.py"]
+  - name: process_b
+    container:
+      image: python:3.11
+      command: ["python", "process_b.py"]
+  - name: merge
+    container:
+      image: python:3.11
+      command: ["python", "merge.py"]

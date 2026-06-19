@@ -1,0 +1,201 @@
+# FlowForge Local Development Environment
+# Usage: docker-compose up -d
+
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: flowforge-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: flowforge
+      POSTGRES_PASSWORD: flowforge
+      POSTGRES_DB: flowforge
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowforge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flowforge
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: flowforge-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flowforge
+
+  # MinIO S3-compatible storage (for pipeline artifacts)
+  minio:
+    image: minio/minio:latest
+    container_name: flowforge-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/minio_data
+    command: server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flowforge
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: flowforge-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deployment/docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    networks:
+      - flowforge
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: flowforge-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+      GF_INSTALL_PLUGINS: "grafana-piechart-panel"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployment/docker/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    depends_on:
+      - prometheus
+    networks:
+      - flowforge
+
+  # Loki for log aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: flowforge-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./deployment/docker/loki-config.yml:/etc/loki/local-config.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yml
+    networks:
+      - flowforge
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: flowforge-jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+    networks:
+      - flowforge
+
+  # Argo Workflows (Kubernetes on Docker, simplified)
+  # Note: For full Argo, use local K8s cluster (minikube/kind)
+  # This is a placeholder; use scripts/local-cluster-up.sh for full setup
+  argo-postgres:
+    image: postgres:16-alpine
+    container_name: flowforge-argo-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: argo
+      POSTGRES_PASSWORD: argo
+      POSTGRES_DB: argo
+    volumes:
+      - argo_postgres_data:/var/lib/postgresql/data
+    networks:
+      - flowforge
+
+  # FlowForge API Server (built locally)
+  # Build: docker build -f deployment/docker/Dockerfile.api -t flowforge-api:dev .
+  # api:
+  #   image: flowforge-api:dev
+  #   container_name: flowforge-api
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USER: flowforge
+  #     DB_PASSWORD: flowforge
+  #     DB_NAME: flowforge
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     PROMETHEUS_ADDR: prometheus:9090
+  #     LOG_LEVEL: debug
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - flowforge
+
+  # FlowForge UI (built locally)
+  # Build: cd ui && npm run build && docker build -t flowforge-ui:dev .
+  # ui:
+  #   image: flowforge-ui:dev
+  #   container_name: flowforge-ui
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     REACT_APP_API_URL: http://localhost:8080
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - flowforge
+
+volumes:
+  postgres_data:
+  argo_postgres_data:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+
+networks:
+  flowforge:
+    driver: bridge
+
+# Service URLs (once running):
+#   PostgreSQL:     localhost:5432 (user: flowforge, password: flowforge)
+#   Redis:          localhost:6379
+#   MinIO:          http://localhost:9000 (console: http://localhost:9001)
+#   Prometheus:     http://localhost:9090
+#   Grafana:        http://localhost:3001 (user: admin, password: admin)
+#   Jaeger UI:      http://localhost:16686
+#   Loki:           http://localhost:3100
+#   FlowForge API:  http://localhost:8080 (when running)
+#   FlowForge UI:   http://localhost:3000 (when running)

@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flowforge"
+version = "0.1.0"
+description = "Declarative data pipeline framework for orchestrating workflows"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "FlowForge Contributors", email = "developers@flowforge.dev"}
+]
+keywords = ["pipeline", "orchestration", "workflow", "dag", "argo", "airflow"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "flowforge-ir>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=3.0",
+    "black>=22.0",
+    "isort>=5.0",
+    "pylint>=2.0",
+    "mypy>=0.950",
+]
+aws = ["boto3>=1.20"]
+spark = ["pyspark>=3.0"]
+
+[project.urls]
+Homepage = "https://github.com/flowforge/flowforge"
+Documentation = "https://flowforge.readthedocs.io"
+Repository = "https://github.com/flowforge/flowforge"
+"Bug Tracker" = "https://github.com/flowforge/flowforge/issues"
+
+[project.scripts]
+flowforge = "flowforge.cli.cli:main"
+
+[tool.setuptools]
+packages = ["flowforge"]
+
+[tool.setuptools.package-data]
+flowforge = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+py_version = 311
+
+[tool.pylint]
+max-line-length = 100
+disable = ["missing-docstring", "too-many-arguments"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]

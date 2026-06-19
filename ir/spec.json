@@ -1,0 +1,258 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FlowForge Pipeline Specification",
+  "description": "JSON Schema for FlowForge Intermediate Representation (IR) v1",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "tasks"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "flowforge.io/v1",
+      "description": "API version identifier"
+    },
+    "kind": {
+      "type": "string",
+      "const": "Pipeline",
+      "description": "Resource kind"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "description": "Pipeline name (lowercase alphanumeric and hyphens)"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?$",
+          "description": "Semantic version (e.g., 1.0.0, 1.0.0-alpha)"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Kubernetes namespace or logical grouping"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Team or person responsible"
+        },
+        "description": {
+          "type": "string",
+          "description": "Pipeline description"
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Key-value tags for organizing pipelines"
+        }
+      },
+      "additionalProperties": true
+    },
+    "tasks": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/Task"
+      },
+      "description": "Map of task ID to Task definition"
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Edge"
+      },
+      "description": "List of connections between tasks"
+    }
+  },
+  "definitions": {
+    "Task": {
+      "type": "object",
+      "required": ["type", "handler"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["Source", "Transform", "Sink", "Conditional", "Retry", "Schedule"],
+          "description": "Task type"
+        },
+        "handler": {
+          "$ref": "#/definitions/Handler",
+          "description": "How the task is executed"
+        },
+        "description": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Schema"
+          },
+          "description": "Input ports with schema"
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Schema"
+          },
+          "description": "Output ports with schema"
+        },
+        "executorConfig": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Executor-specific configuration (e.g., argo, airflow)"
+        },
+        "costEstimate": {
+          "$ref": "#/definitions/CostEstimate",
+          "description": "Optional cost estimation"
+        },
+        "retry": {
+          "$ref": "#/definitions/RetryPolicy",
+          "description": "Retry configuration (if type != Retry)"
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Task timeout (e.g., 3600s, 1h)"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Custom metadata"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Handler": {
+      "type": "object",
+      "required": ["type", "source"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["python", "sql", "spark", "docker", "http"],
+          "description": "Handler type"
+        },
+        "source": {
+          "type": "string",
+          "description": "Handler source (code string, image URI, or reference)"
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Environment variables"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Schema": {
+      "type": "object",
+      "description": "JSON Schema for task port (input/output)",
+      "additionalProperties": true
+    },
+    "Edge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/TaskPort",
+          "description": "Source task output"
+        },
+        "to": {
+          "$ref": "#/definitions/TaskPort",
+          "description": "Target task input"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskPort": {
+      "type": "object",
+      "required": ["task", "port"],
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "Task ID"
+        },
+        "port": {
+          "type": "string",
+          "description": "Port name (input or output)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RetryPolicy": {
+      "type": "object",
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of attempts"
+        },
+        "backoff": {
+          "type": "string",
+          "enum": ["linear", "exponential", "fixed"],
+          "description": "Backoff strategy"
+        },
+        "backoffMultiplier": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Multiplier for exponential backoff (default 2)"
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Initial delay in seconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CostEstimate": {
+      "type": "object",
+      "properties": {
+        "compute": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "description": "Cost unit (e.g., cpu-second, compute-hour)"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Quantity"
+            }
+          }
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "description": "Cost unit (e.g., GB-month, GB-hour)"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Quantity"
+            }
+          }
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "description": "Cost unit (e.g., GB-out, GB-in)"
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Quantity"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

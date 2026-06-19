@@ -1,0 +1,90 @@
+{
+  "apiVersion": "flowforge.io/v1",
+  "kind": "Pipeline",
+  "metadata": {
+    "name": "scheduled-batch-job",
+    "version": "1.0.0",
+    "owner": "batch_team",
+    "description": "Scheduled batch job: Daily at 2 AM"
+  },
+  "tasks": {
+    "schedule": {
+      "type": "Schedule",
+      "handler": {
+        "type": "python",
+        "source": "cron('0 2 * * *')"
+      },
+      "description": "Trigger daily at 2 AM UTC",
+      "outputs": {
+        "trigger": {"type": "object"}
+      }
+    },
+    "fetch_data": {
+      "type": "Source",
+      "handler": {
+        "type": "python",
+        "source": "fetch_from_api(endpoint='daily_report')"
+      },
+      "description": "Fetch daily report from API",
+      "inputs": {
+        "trigger": {"type": "object"}
+      },
+      "outputs": {
+        "data": {"type": "array", "items": {"type": "object"}}
+      },
+      "retry": {
+        "maxAttempts": 5,
+        "backoff": "exponential",
+        "backoffMultiplier": 2.0,
+        "initialDelaySeconds": 10
+      },
+      "timeout": "1800s"
+    },
+    "process": {
+      "type": "Transform",
+      "handler": {
+        "type": "spark",
+        "source": "s3://scripts/process.jar"
+      },
+      "description": "Process data with Spark",
+      "inputs": {
+        "data": {"type": "array", "items": {"type": "object"}}
+      },
+      "outputs": {
+        "processed": {"type": "array", "items": {"type": "object"}}
+      },
+      "executorConfig": {
+        "spark": {
+          "executor_count": 4,
+          "executor_memory": "4g",
+          "driver_memory": "2g"
+        }
+      }
+    },
+    "archive": {
+      "type": "Sink",
+      "handler": {
+        "type": "python",
+        "source": "upload_to_s3(bucket='archive', key=date.now())"
+      },
+      "description": "Archive results to S3",
+      "inputs": {
+        "data": {"type": "array", "items": {"type": "object"}}
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": {"task": "schedule", "port": "trigger"},
+      "to": {"task": "fetch_data", "port": "trigger"}
+    },
+    {
+      "from": {"task": "fetch_data", "port": "data"},
+      "to": {"task": "process", "port": "data"}
+    },
+    {
+      "from": {"task": "process", "port": "processed"},
+      "to": {"task": "archive", "port": "data"}
+    }
+  ]
+}

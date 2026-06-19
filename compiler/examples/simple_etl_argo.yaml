@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: simple_etl
+  namespace: default
+spec:
+  entrypoint: simple_etl
+  templates:
+  - name: simple_etl
+    dag:
+      tasks:
+      - name: extract
+        template: extract
+      - name: transform
+        template: transform
+        dependencies: extract
+      - name: load
+        template: load
+        dependencies: transform
+  - name: extract
+    container:
+      image: python:3.11
+      command: ["python", "extract.py"]
+      resources:
+        requests:
+          cpu: "1"
+          memory: "512Mi"
+  - name: transform
+    container:
+      image: python:3.11
+      command: ["python", "transform.py"]
+      resources:
+        requests:
+          cpu: "2"
+          memory: "1Gi"
+  - name: load
+    container:
+      image: python:3.11
+      command: ["python", "load.py"]
+      resources:
+        requests:
+          cpu: "1"
+          memory: "512Mi"

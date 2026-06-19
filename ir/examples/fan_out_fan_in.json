@@ -1,0 +1,102 @@
+{
+  "apiVersion": "flowforge.io/v1",
+  "kind": "Pipeline",
+  "metadata": {
+    "name": "fan-out-fan-in",
+    "version": "1.0.0",
+    "owner": "analytics_team",
+    "description": "Parallel processing: Extract → {TransformA, TransformB} → Aggregate → Load"
+  },
+  "tasks": {
+    "extract": {
+      "type": "Source",
+      "handler": {
+        "type": "python",
+        "source": "read_from_kafka()"
+      },
+      "description": "Read from Kafka stream",
+      "outputs": {
+        "events": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      }
+    },
+    "transform_a": {
+      "type": "Transform",
+      "handler": {
+        "type": "python",
+        "source": "apply_filter_a(data)"
+      },
+      "description": "Filter and aggregate events type A",
+      "inputs": {
+        "events": {"type": "array", "items": {"type": "object"}}
+      },
+      "outputs": {
+        "filtered": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "transform_b": {
+      "type": "Transform",
+      "handler": {
+        "type": "python",
+        "source": "apply_filter_b(data)"
+      },
+      "description": "Filter and aggregate events type B",
+      "inputs": {
+        "events": {"type": "array", "items": {"type": "object"}}
+      },
+      "outputs": {
+        "filtered": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "aggregate": {
+      "type": "Transform",
+      "handler": {
+        "type": "python",
+        "source": "merge_results(data_a, data_b)"
+      },
+      "description": "Merge results from parallel transforms",
+      "inputs": {
+        "data_a": {"type": "array", "items": {"type": "object"}},
+        "data_b": {"type": "array", "items": {"type": "object"}}
+      },
+      "outputs": {
+        "merged": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "load": {
+      "type": "Sink",
+      "handler": {
+        "type": "python",
+        "source": "write_to_db(data)"
+      },
+      "description": "Write aggregated results to database",
+      "inputs": {
+        "data": {"type": "array", "items": {"type": "object"}}
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": {"task": "extract", "port": "events"},
+      "to": {"task": "transform_a", "port": "events"}
+    },
+    {
+      "from": {"task": "extract", "port": "events"},
+      "to": {"task": "transform_b", "port": "events"}
+    },
+    {
+      "from": {"task": "transform_a", "port": "filtered"},
+      "to": {"task": "aggregate", "port": "data_a"}
+    },
+    {
+      "from": {"task": "transform_b", "port": "filtered"},
+      "to": {"task": "aggregate", "port": "data_b"}
+    },
+    {
+      "from": {"task": "aggregate", "port": "merged"},
+      "to": {"task": "load", "port": "data"}
+    }
+  ]
+}
