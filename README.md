@@ -51,6 +51,52 @@ FlowForge is a **complete, production-grade data pipeline orchestration platform
 
 ---
 
+## 🎬 Live Demo - Run Locally
+
+See FlowForge in action with a complete end-to-end demo including Prefect and Dagster integrations.
+
+### Quick Start (5 minutes)
+
+```bash
+# Setup Python environment
+cd FlowForge
+python -m venv integrations/.venv
+source integrations/.venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -r integrations/requirements.txt
+
+# Terminal 1: Start observability API
+python -m uvicorn integrations.observability_api:app --host 127.0.0.1 --port 8000
+
+# Terminal 2: Build & start web server
+go build -o web/server.exe ./web/server.go
+./web/server.exe
+
+# Terminal 3: Run Prefect ETL demo
+python integrations/prefect_flow.py
+
+# Terminal 4: Run Dagster ETL demo
+python integrations/dagster_pipeline.py
+```
+
+### View Live Results
+Open **http://localhost:8080** and navigate to the **Execution Logs** tab to see:
+- Real-time pipeline status
+- Task execution logs
+- Performance metrics
+- Live polling (updates every 5 seconds)
+
+### What You'll See
+✅ DAG visualization with Cytoscape.js
+✅ Argo Workflows YAML generation
+✅ Apache Airflow DAG export
+✅ Terraform infrastructure-as-code
+✅ Real execution logs from Prefect & Dagster
+✅ SQLite-backed observability API
+
+For detailed setup, see [integrations/README.md](integrations/README.md).
+
+---
+
 ## 📦 Project Structure
 
 ```

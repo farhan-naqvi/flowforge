@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  prefect-orion:
+    image: prefecthq/prefect:latest
+    command: prefect orion start --host 0.0.0.0 --port 4200
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./integrations:/work
+    working_dir: /work
+
+  dagit:
+    image: dagster/dagit:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./integrations:/workspace
+    working_dir: /workspace
+    command: dagit -h 0.0.0.0 -p 3000 -w /workspace
+
+  flowforge-ui:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - prefect-orion
+      - dagit
+  observability:
+    build: .
+    command: uvicorn integrations.observability_api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./integrations:/app/integrations
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1

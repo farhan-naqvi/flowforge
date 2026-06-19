@@ -1,0 +1,6 @@
+prefect==2.10.15
+dagster==1.4.16
+dagit==1.4.16
+fastapi==0.95.2
+uvicorn==0.22.0
+sqlite-utils==3.34
