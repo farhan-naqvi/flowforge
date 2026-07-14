@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowForge Workbench</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>FlowForge</h1>
+        <p class="tagline">Portable workflow workbench</p>
+      </div>
+    </div>
+    <div class="conn" id="conn" role="status" aria-live="polite">
+      <span class="dot" id="conn-dot"></span><span id="conn-text">connecting…</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="Pipelines">
+      <div class="sidebar-head">
+        <h2>Pipelines</h2>
+        <button id="refresh" class="icon-btn" title="Refresh">↻</button>
+      </div>
+      <ul id="pipeline-list" class="pipeline-list"></ul>
+      <p id="pipeline-empty" class="empty hidden">No pipelines found in the workspace.</p>
+    </nav>
+
+    <main class="detail" id="detail">
+      <div class="placeholder" id="placeholder">
+        <h2>Select a pipeline</h2>
+        <p>Pick a pipeline on the left to see its canonical IR, validation
+           diagnostics, per-target capability report, and generated artifacts —
+           then run it locally.</p>
+      </div>
+
+      <section class="pipeline-detail hidden" id="pipeline-detail">
+        <div class="detail-head">
+          <div>
+            <h2 id="pd-name">—</h2>
+            <p class="muted" id="pd-meta">—</p>
+          </div>
+          <div class="state-badges" id="pd-state"></div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="diagnostics" role="tab">Diagnostics</button>
+          <button class="tab" data-tab="ir" role="tab">Canonical IR</button>
+          <button class="tab" data-tab="targets" role="tab">Targets</button>
+          <button class="tab" data-tab="runs" role="tab">Runs</button>
+        </div>
+
+        <div class="tab-panels">
+          <section class="panel active" data-panel="diagnostics" role="tabpanel">
+            <div id="diag-body"></div>
+          </section>
+
+          <section class="panel" data-panel="ir" role="tabpanel">
+            <div class="code-head">
+              <span class="muted">flowforge.io/v1</span>
+              <button class="btn" data-copy="ir">Copy</button>
+            </div>
+            <pre class="code" id="ir-body"></pre>
+          </section>
+
+          <section class="panel" data-panel="targets" role="tabpanel">
+            <div class="target-switch" id="target-switch"></div>
+            <table class="cap-table" id="cap-table">
+              <thead><tr><th>Feature</th><th>Support</th><th>Notes</th></tr></thead>
+              <tbody id="cap-body"></tbody>
+            </table>
+            <div class="code-head">
+              <span class="muted" id="artifact-label">Generated artifact</span>
+              <span>
+                <button class="btn" data-copy="artifact">Copy</button>
+                <button class="btn" id="download-artifact">Download</button>
+              </span>
+            </div>
+            <pre class="code" id="artifact-body">Select a target to compile.</pre>
+          </section>
+
+          <section class="panel" data-panel="runs" role="tabpanel">
+            <div class="runs-head">
+              <button class="btn primary" id="run-btn">Run locally</button>
+              <span class="muted run-note">Executes your pipeline code in-process (local dev only).</span>
+            </div>
+            <div id="run-current"></div>
+            <h3 class="muted">History</h3>
+            <ul class="run-list" id="run-list"></ul>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
