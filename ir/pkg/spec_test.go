@@ -1,6 +1,7 @@
 package ir
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -288,15 +289,5 @@ func TestSpecValidateFailures(t *testing.T) {
 }
 
 func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && contains(s, substr) || s == "" || s == substr || (len(s) > len(substr) && contains(s[1:], substr))
-}
-
-// Better contains function
-func stringContains(s, substr string) bool {
-	for i := 0; i < len(s)-len(substr)+1; i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(s, substr)
 }

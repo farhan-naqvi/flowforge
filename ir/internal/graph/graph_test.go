@@ -1,9 +1,10 @@
-package graph
+package graph_test
 
 import (
-	"flowforge/ir/internal/graph"
-	"flowforge/ir/pkg"
 	"testing"
+
+	"flowforge/ir/internal/graph"
+	ir "flowforge/ir/pkg"
 )
 
 func TestDAGNodes(t *testing.T) {

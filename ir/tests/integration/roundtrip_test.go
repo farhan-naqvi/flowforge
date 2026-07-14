@@ -1,13 +1,13 @@
 package integration
 
 import (
-	"encoding/json"
-	"flowforge/ir/internal/graph"
-	"flowforge/ir/internal/validator"
-	"flowforge/ir/pkg"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
+
+	"flowforge/ir/internal/graph"
+	"flowforge/ir/internal/validator"
+	ir "flowforge/ir/pkg"
 )
 
 // TestRoundtripJSON tests JSON serialization roundtrip.
@@ -64,7 +64,7 @@ func TestLoadExamplePipelines(t *testing.T) {
 		t.Run(example, func(t *testing.T) {
 			// Find example file
 			path := filepath.Join("..", "..", "examples", example)
-			data, err := ioutil.ReadFile(path)
+			data, err := os.ReadFile(path)
 			if err != nil {
 				t.Skipf("example file not found: %s", path)
 			}

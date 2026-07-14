@@ -1,9 +1,10 @@
-package validator
+package validator_test
 
 import (
-	"flowforge/ir/internal/validator"
-	"flowforge/ir/pkg"
 	"testing"
+
+	"flowforge/ir/internal/validator"
+	ir "flowforge/ir/pkg"
 )
 
 func TestDAGValidatorNoCycle(t *testing.T) {
