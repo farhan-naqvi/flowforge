@@ -91,12 +91,14 @@ function renderStateBadges() {
   if (v.ok) {
     box.appendChild(badge("validated", "ok"));
   } else {
-    box.appendChild(badge(v.errors.length + " errors", "err"));
+    box.appendChild(badge(plural(v.errors.length, "error"), "err"));
   }
-  if (v.warnings && v.warnings.length) box.appendChild(badge(v.warnings.length + " warnings", "warn"));
+  if (v.warnings && v.warnings.length) box.appendChild(badge(plural(v.warnings.length, "warning"), "warn"));
 }
 
 function badge(text, kind) { return el("span", "badge " + kind, text); }
+
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
 
 function renderDiagnostics() {
   const body = document.getElementById("diag-body");

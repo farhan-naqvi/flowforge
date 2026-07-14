@@ -63,7 +63,10 @@ def compile(spec: PipelineSpec) -> str:
         lines.append(f"def _run_{tid}(**context):")
         doc = task.description or f"FlowForge task {tid}"
         lines.append(f"    {doc!r}")
-        lines.append(f"    # handler: {task.handler.source}")
+        # Defence in depth: strip newlines so a handler source can never break
+        # out of this comment line, even for IR built directly (not via parsing).
+        safe_source = task.handler.source.replace("\n", " ").replace("\r", " ")
+        lines.append(f"    # handler: {safe_source}")
         lines.append("    raise NotImplementedError('wire this to your task implementation')")
         lines.append("")
         lines.append("")

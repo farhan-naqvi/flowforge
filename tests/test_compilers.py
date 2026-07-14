@@ -59,6 +59,19 @@ def test_no_injection_in_output():
             assert line.strip().startswith("#") or "'owner'" in line or repr("a'; import os #") in line
 
 
+def test_handler_source_newline_cannot_break_comment(tmp_path):
+    # A newline in handler.source must not escape the generated comment line.
+    spec = _spec()
+    spec.tasks["extract"].handler = Handler(source="etl:extract\n    import os; os.system('id')")
+    out = compile_target(spec, "airflow")
+    p = tmp_path / "dag.py"
+    p.write_text(out)
+    py_compile.compile(str(p), doraise=True)
+    assert "os.system" not in out or all(
+        "os.system" not in ln or ln.lstrip().startswith("#") for ln in out.splitlines()
+    )
+
+
 def test_examples_compile_end_to_end():
     for name in ("simple_etl.py", "fan_out_fan_in.py"):
         spec = parse_file(os.path.join(EXAMPLES, name))
