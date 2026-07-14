@@ -80,6 +80,12 @@ out/
 *.sublime-workspace
 .sublime-project
 
+# Databases / local run store (never commit real run data)
+*.db
+*.sqlite
+*.sqlite3
+.flowforge/
+
 # Testing
 .coverage
 .pytest_cache/
