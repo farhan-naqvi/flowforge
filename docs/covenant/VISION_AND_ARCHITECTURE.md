@@ -1,10 +1,12 @@
 # Covenant — Vision & Architecture
 
-> **Status: Proposed direction — design stage.** Nothing in this document is
-> implemented yet. It captures the product direction agreed in design review and
-> the decisions locked so far. The existing `flowforge/` package (canonical IR,
-> validation, local execution) is the **verify substrate** this design reuses; it
-> is not the product described here.
+> **Status: MVP built (Slices 0–3).** The trust core is implemented and tested:
+> `covenant-transforms/` (the Ibis primitive library) and `covenant/` (ODCS
+> contracts, planner with schema-inference conformance, synthetic test data,
+> local DuckDB verify, Argo/Spark compile, CLI, and a workbench UI). Backend
+> lowering decision **locked to Ibis**. What is *not* built: a live Spark/Argo
+> cluster run and an LLM-backed planner — both are clean interfaces with
+> deterministic defaults (see §10). Run `covenant demo` or `covenant serve`.
 
 ## 1. The problem
 
@@ -131,12 +133,12 @@ code:** `id@semver`, JSON-schema'd parameters, typed input port(s), and a
 statically). It does **not** embed one Spark implementation and one DuckDB
 implementation.
 
-**Dual-backend lowering.** Primitives lower through a single expression layer to
-both backends. The recommended substrate is **[Ibis](https://ibis-project.org)**,
-which compiles the same expression to DuckDB *and* Spark — so the local verdict
-actually predicts the Spark run, and we avoid maintaining two hand-written engines
-that drift apart. Delta-specific I/O and `scd2` are wrapped by us at the edges.
-*(Open decision — see §10.)*
+**Dual-backend lowering (locked: Ibis).** Primitives lower through a single
+expression layer to both backends via **[Ibis](https://ibis-project.org)**, which
+compiles the same expression to DuckDB *and* Spark — so the local verdict actually
+predicts the Spark run, and we avoid maintaining two hand-written engines that
+drift apart. Delta-specific I/O and `scd2` are wrapped by us at the edges. This
+choice is implemented in `covenant-transforms/`.
 
 **v1 primitive set (S3 Delta → Delta):**
 `read_delta`, `write_delta`, `cast`, `select`, `rename`, `filter`,
@@ -175,12 +177,30 @@ existing verify substrate.
 **Fundable demo = Slice 0 + 1:** a data engineer takes a real S3 Delta table to a
 new contract-conformant table in ~10 minutes and *trusts the green check*.
 
-## 10. Open decisions
+## 10. What is built vs. deferred
 
-1. **`covenant-transforms` backend:** Ibis (recommended — one lowering, local
-   predicts prod) vs. hand-rolled DuckDB + Spark engines (more control, permanent
-   duplication).
-2. **Go/no-go on building Slice 0** against the existing verify substrate.
+**Built and tested (this PR):**
+
+| Slice | Status | Where |
+|---|---|---|
+| Primitive library (Ibis) | ✅ 6 tests | `covenant-transforms/` |
+| 0 — trust engine (contracts → plan → schema-inference conformance → test data → local DuckDB verify) | ✅ 7 tests, incl. a static-passes/dynamic-catches case | `covenant/{odcs,planner,testdata,verify}.py` |
+| 1 — planner from intent | ✅ deterministic planner + pluggable `Planner` interface | `covenant/planner.py` |
+| 2 — UI + GitOps write | ✅ workbench UI, `covenant serve`, plan write for PR | `covenant/{server,webui,gitops}.py` |
+| 3 — compile to Argo/Spark | ✅ artifact generation (safe YAML), refuses non-conformant plans | `covenant/compile.py` |
+
+Run it: `covenant demo` (end-to-end incl. the failure case) or `covenant serve`.
+
+**Deferred (clean interfaces, deterministic defaults today — not faked):**
+
+1. **LLM-backed planner.** The `Planner` interface lets an agent *propose* steps;
+   they are validated by the exact same conformance + verify path, so an agent can
+   never emit an unverified plan. v1 ships the deterministic planner.
+2. **Live Spark/Argo run.** We *generate* the Argo/Spark artifact deterministically;
+   submitting it needs a Spark + Argo cluster (out of scope for local verify).
+   Because both backends lower from the same primitives, the local DuckDB verdict
+   predicts the Spark run.
+3. **`scd2` / `window` primitives and Delta-native incremental I/O** — roadmap.
 
 ## 11. Relationship to the existing repo
 

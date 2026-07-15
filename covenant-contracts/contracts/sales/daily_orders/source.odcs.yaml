@@ -1,0 +1,14 @@
+# ODCS source contract — raw sales orders (the pipeline's input).
+apiVersion: v3.0.0
+kind: DataContract
+id: sales.orders.raw
+name: raw_orders
+schema:
+  - name: orders
+    physicalType: table
+    properties:
+      - { name: order_id, logicalType: integer, required: true, primaryKey: true }
+      - { name: customer_id, logicalType: integer, required: true }
+      - { name: amount, logicalType: number, required: true }
+      - { name: status, logicalType: string, required: true }
+      - { name: created_at, logicalType: timestamp, required: true }

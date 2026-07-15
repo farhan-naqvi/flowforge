@@ -1,0 +1,8 @@
+# Per-directory ownership for the Covenant GitOps source of truth.
+# Split by concern so contract owners aren't pulled into every test change.
+# Replace the placeholder teams with real ones before use.
+
+/contracts/   @data-contract-owners
+/intents/     @pipeline-authors
+/plans/       @platform-eng
+/tests/       @data-quality

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Covenant Workbench</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div><h1>Covenant</h1><p class="tagline">Contract-first · verify before you run</p></div>
+    </div>
+    <div class="conn" id="conn"><span class="dot" id="dot"></span><span id="conn-text">connecting…</span></div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="Data products">
+      <h2>Data products</h2>
+      <ul id="product-list" class="product-list"></ul>
+      <p id="empty" class="empty hidden">No data products found.</p>
+    </nav>
+
+    <main class="detail" id="detail">
+      <div class="placeholder" id="placeholder">
+        <h2>Select a data product</h2>
+        <p>Covenant checks a pipeline against its target data contract — statically
+           (schema inference) and on synthetic data locally — before compiling it
+           to an Argo/Spark run. The green check is the thing you trust.</p>
+      </div>
+
+      <section class="product hidden" id="product">
+        <div class="phead">
+          <h2 id="p-slug">—</h2>
+          <div id="p-badges" class="badges"></div>
+        </div>
+
+        <div class="contracts">
+          <div class="card"><h3>Source contract <span class="muted" id="src-id"></span></h3><table class="sch" id="src-schema"></table></div>
+          <div class="card"><h3>Target contract <span class="muted" id="tgt-id"></span></h3><table class="sch" id="tgt-schema"></table></div>
+        </div>
+
+        <div class="card">
+          <h3>Plan <span class="muted">— composed from the primitive library</span></h3>
+          <ol class="steps" id="steps"></ol>
+          <div id="static-conf" class="conf"></div>
+        </div>
+
+        <div class="card">
+          <div class="verify-head">
+            <h3>Verify</h3>
+            <span>
+              <button class="btn primary" id="verify-btn">Verify against contract</button>
+              <button class="btn" id="compile-btn">Compile Argo/Spark</button>
+              <button class="btn" id="save-btn">Save plan (PR)</button>
+            </span>
+          </div>
+          <div id="verdict"></div>
+        </div>
+
+        <div class="card hidden" id="artifact-card">
+          <div class="verify-head"><h3 id="artifact-title">Artifact</h3><button class="btn" id="copy-btn">Copy</button></div>
+          <pre class="code" id="artifact"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

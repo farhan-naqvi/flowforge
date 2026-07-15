@@ -1,0 +1,13 @@
+# ODCS target contract — daily order summary. This is the verifier's oracle:
+# the pipeline is only allowed to run if its output conforms to this.
+apiVersion: v3.0.0
+kind: DataContract
+id: sales.daily_orders
+name: daily_orders
+schema:
+  - name: daily_orders
+    physicalType: table
+    properties:
+      - { name: order_date, logicalType: date, required: true, primaryKey: true }
+      - { name: total_amount, logicalType: number, required: true }
+      - { name: order_count, logicalType: integer, required: true }

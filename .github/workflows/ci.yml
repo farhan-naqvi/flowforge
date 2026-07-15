@@ -31,6 +31,28 @@ jobs:
           python -c "import yaml; yaml.safe_load(open('/tmp/etl.argo.yaml'))"
           python -m py_compile /tmp/etl.airflow.py
 
+  covenant:
+    name: covenant (contract-first pipeline)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install covenant-transforms + covenant
+        run: |
+          pip install -e covenant-transforms
+          pip install -e covenant
+      - name: Primitive library tests
+        run: pytest covenant-transforms/tests -q
+      - name: Trust-core tests
+        run: pytest covenant/tests -q
+      - name: End-to-end demo (incl. failure case)
+        run: covenant demo
+
   security:
     name: python security scan
     runs-on: ubuntu-latest
