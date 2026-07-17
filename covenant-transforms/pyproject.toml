@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "covenant-transforms"
+version = "0.1.0"
+description = "Covenant's versioned primitive library: declarative, schema-inferring, Ibis-lowered transforms"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+keywords = ["data", "pipeline", "transform", "ibis", "delta", "schema"]
+dependencies = ["ibis-framework[duckdb]>=9.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+spark = ["ibis-framework[pyspark]>=9.0"]
+
+[tool.setuptools]
+packages = ["covenant_transforms"]

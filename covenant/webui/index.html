@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Covenant Workbench</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div><h1>Covenant</h1><p class="tagline">Contract-first · verify before you run</p></div>
+    </div>
+    <div class="conn" id="conn"><span class="dot" id="dot"></span><span id="conn-text">connecting…</span></div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="Data products">
+      <div class="sidebar-head">
+        <h2>Data products</h2>
+        <button class="btn small" id="new-btn">+ New</button>
+      </div>
+      <form class="new-form hidden" id="new-form">
+        <input id="new-slug" placeholder="domain/data_product" aria-label="New data product slug" autocomplete="off">
+        <div class="row">
+          <button class="btn primary small" type="submit">Create</button>
+          <button class="btn small" type="button" id="new-cancel">Cancel</button>
+        </div>
+        <p class="err-inline hidden" id="new-error"></p>
+      </form>
+      <ul id="product-list" class="product-list"></ul>
+      <p id="empty" class="empty hidden">No data products yet — create one.</p>
+    </nav>
+
+    <main class="detail" id="detail">
+      <div class="placeholder" id="placeholder">
+        <h2>Select or create a data product</h2>
+        <p>Author ODCS source + target contracts and a pipeline intent. Covenant
+           checks the pipeline against the target contract — statically (schema
+           inference) and on synthetic data locally — before compiling it to an
+           Argo/Spark run. The green check is the thing you trust.</p>
+      </div>
+
+      <section class="product hidden" id="product">
+        <div class="phead">
+          <h2 id="p-slug">—</h2>
+          <div id="p-badges" class="badges"></div>
+        </div>
+
+        <div class="contracts">
+          <div class="card" id="src-card">
+            <div class="card-head"><h3>Source contract <span class="muted" id="src-id"></span></h3></div>
+            <table class="editor" id="src-editor"></table>
+            <div class="card-actions">
+              <button class="btn small" data-add="source">+ Add field</button>
+              <button class="btn primary small" data-save-contract="source">Save source</button>
+              <span class="err-inline hidden" data-err="source"></span>
+            </div>
+          </div>
+          <div class="card" id="tgt-card">
+            <div class="card-head"><h3>Target contract <span class="muted" id="tgt-id"></span></h3></div>
+            <table class="editor" id="tgt-editor"></table>
+            <div class="card-actions">
+              <button class="btn small" data-add="target">+ Add field</button>
+              <button class="btn primary small" data-save-contract="target">Save target</button>
+              <span class="err-inline hidden" data-err="target"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Intent <span class="muted">— transform steps composed into a plan</span></h3></div>
+          <div id="intent-editor"></div>
+          <div class="card-actions">
+            <button class="btn small" id="add-step">+ Add step</button>
+            <button class="btn primary small" id="save-intent">Save intent</button>
+            <span class="err-inline hidden" id="intent-error"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Resolved plan <span class="muted">— schema threaded through each step</span></h3></div>
+          <ol class="steps" id="steps"></ol>
+          <div id="static-conf" class="conf"></div>
+        </div>
+
+        <div class="card">
+          <div class="verify-head">
+            <h3>Verify &amp; compile</h3>
+            <span>
+              <button class="btn primary" id="verify-btn">Verify against contract</button>
+              <button class="btn" id="compile-btn">Compile Argo/Spark</button>
+              <button class="btn" id="save-btn">Save plan (PR)</button>
+            </span>
+          </div>
+          <div id="verdict"></div>
+        </div>
+
+        <div class="card hidden" id="artifact-card">
+          <div class="verify-head"><h3 id="artifact-title">Artifact</h3><button class="btn" id="copy-btn">Copy</button></div>
+          <pre class="code" id="artifact"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "covenant"
+version = "0.1.0"
+description = "Contract-first, verify-before-run data pipeline platform (ODCS contracts, Ibis primitives, local DuckDB verify, Argo/Spark compile)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+keywords = ["data-contract", "odcs", "pipeline", "ibis", "delta", "argo", "spark"]
+dependencies = [
+    "PyYAML>=6.0",
+    "ibis-framework[duckdb]>=9.0",
+    "covenant-transforms",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+covenant = "covenant.cli:main"
+
+[tool.setuptools]
+packages = ["covenant", "covenant.webui"]
+
+[tool.setuptools.package-data]
+covenant = ["webui/*"]

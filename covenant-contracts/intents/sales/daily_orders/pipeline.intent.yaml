@@ -1,0 +1,20 @@
+# Structured, mostly-no-code intent (what the UI produces).
+# Keep only completed orders, roll them up to a daily total per day.
+data_product: sales/daily_orders
+source_contract: covenant-contracts/contracts/sales/daily_orders/source.odcs.yaml
+target_contract: covenant-contracts/contracts/sales/daily_orders/target.odcs.yaml
+transforms_version: "0.1.0"
+steps:
+  - primitive: filter
+    params:
+      predicate: { op: "=", args: [{ col: status }, { lit: completed }] }
+  - primitive: derive
+    params:
+      column: order_date
+      expr: { fn: date_trunc, args: [{ lit: day }, { col: created_at }], type: date }
+  - primitive: aggregate
+    params:
+      group_by: [order_date]
+      aggs:
+        - { name: total_amount, fn: sum, col: amount }
+        - { name: order_count, fn: count, col: order_id }
