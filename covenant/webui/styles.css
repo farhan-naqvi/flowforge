@@ -67,3 +67,33 @@ button{font-family:inherit;cursor:pointer}
 .problem{font-family:var(--mono);font-size:12px;color:var(--err);margin:2px 0 2px var(--s4)}
 .sample{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre-wrap;margin-top:var(--s2)}
 .code{background:var(--raised);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--s3);font-family:var(--mono);font-size:12px;overflow-x:auto;white-space:pre;max-height:360px;overflow-y:auto;margin:0}
+
+/* --- Authoring editor --- */
+.sidebar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s3)}
+.sidebar-head h2{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.btn.small{padding:3px 9px;font-size:12px}
+.new-form{margin-bottom:var(--s3);display:flex;flex-direction:column;gap:var(--s2)}
+.new-form input{width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:var(--mono);font-size:13px}
+.new-form .row{display:flex;gap:var(--s2)}
+.err-inline{color:var(--err);font-size:12px;margin:var(--s2) 0 0}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s3)}
+.card-actions{display:flex;gap:var(--s2);align-items:center;margin-top:var(--s3);flex-wrap:wrap}
+.editor{width:100%;border-collapse:collapse;font-size:13px}
+.editor td{padding:var(--s1);border-bottom:1px solid var(--border);vertical-align:middle}
+.editor input[type=text]{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:var(--mono);font-size:13px}
+.editor select{padding:5px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:var(--mono);font-size:13px}
+.editor .flag{text-align:center;white-space:nowrap;color:var(--muted);font-size:12px}
+.editor .flag label{display:inline-flex;gap:3px;align-items:center;cursor:pointer}
+.editor .ord{white-space:nowrap}
+.iconbtn{background:none;border:1px solid transparent;border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;padding:2px 6px;font-size:13px}
+.iconbtn:hover{background:var(--raised);color:var(--text)}
+.iconbtn.danger:hover{color:var(--err)}
+.step{border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--s3);margin-bottom:var(--s2);background:var(--surface)}
+.step-head{display:flex;gap:var(--s2);align-items:center;margin-bottom:var(--s2)}
+.step-head .num{color:var(--muted);font-family:var(--mono);font-size:12px}
+.step-head select{flex:0 0 auto}
+.step-head .spacer{flex:1}
+.step textarea{width:100%;min-height:52px;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--raised);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical}
+.step .plabel{font-size:11px;color:var(--muted);margin-bottom:2px;display:block}
+.dirty-note{color:var(--warn);font-size:12px}
+.save-ok{color:var(--ok);font-size:12px}

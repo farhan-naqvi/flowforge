@@ -186,7 +186,7 @@ new contract-conformant table in ~10 minutes and *trusts the green check*.
 | Primitive library (Ibis) | ✅ 6 tests | `covenant-transforms/` |
 | 0 — trust engine (contracts → plan → schema-inference conformance → test data → local DuckDB verify) | ✅ 7 tests, incl. a static-passes/dynamic-catches case | `covenant/{odcs,planner,testdata,verify}.py` |
 | 1 — planner from intent | ✅ deterministic planner + pluggable `Planner` interface | `covenant/planner.py` |
-| 2 — UI + GitOps write | ✅ workbench UI, `covenant serve`, plan write for PR | `covenant/{server,webui,gitops}.py` |
+| 2 — No-code authoring UI + GitOps | ✅ create data products; edit source/target contracts (fields, types, nullable, PK, reorder); edit intent steps; save to the tree (PR-ready) with atomic writes; live re-validate/verify; plan write | `covenant/{server,authoring,webui,gitops}.py` |
 | 3 — compile to Argo/Spark | ✅ artifact generation (safe YAML), refuses non-conformant plans | `covenant/compile.py` |
 
 Run it: `covenant demo` (end-to-end incl. the failure case) or `covenant serve`.

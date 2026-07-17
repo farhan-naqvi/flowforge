@@ -10,11 +10,15 @@ from __future__ import annotations
 
 import json
 import os
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Optional
 from urllib.parse import parse_qs, urlparse
 
-from . import gitops
+from covenant_transforms import all_ids as primitive_ids
+from covenant_transforms.schema import DTYPES
+
+from . import authoring, gitops
+from .authoring import AuthoringError
 from .compile import compile_argo
 from .model import Intent
 from .odcs import load_contract
@@ -40,14 +44,21 @@ def _product_payload(slug: str, base_dir: str) -> dict:
     intent = Intent.load(os.path.join(base_dir, products[slug].intent_path))
     source = load_contract(os.path.join(base_dir, intent.source_contract))
     target = load_contract(os.path.join(base_dir, intent.target_contract))
-    plan = plan_from_intent(intent, base_dir=base_dir)
-    return {
+    payload = {
         "slug": slug,
         "source": {"id": source.id, "schema": source.schema.to_dicts(), "primary_key": source.primary_key},
         "target": {"id": target.id, "schema": target.schema.to_dicts(), "primary_key": target.primary_key},
         "intent": [{"primitive": s.primitive, "params": s.params} for s in intent.steps],
-        "plan": plan.to_dict(),
+        "plan": None,
+        "plan_error": None,
     }
+    # Planning can fail while a pipeline is being authored (a bad step, an
+    # unknown column). The product must still load so the user can fix it.
+    try:
+        payload["plan"] = plan_from_intent(intent, base_dir=base_dir).to_dict()
+    except PlanError as exc:
+        payload["plan_error"] = str(exc)
+    return payload
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -99,6 +110,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._static(u.path.lstrip("/"))
             elif u.path == "/api/health":
                 self._json({"status": "ok", "base_dir": base})
+            elif u.path == "/api/meta":
+                self._json({"dtypes": list(DTYPES), "primitives": primitive_ids()})
             elif u.path == "/api/products":
                 self._json({"products": [p.__dict__ for p in gitops.discover(base)]})
             elif u.path == "/api/product":
@@ -131,8 +144,16 @@ class Handler(BaseHTTPRequestHandler):
                 self._api_verify(payload.get("slug", ""), base)
             elif u.path == "/api/plan/save":
                 self._api_save(payload.get("slug", ""), base)
+            elif u.path == "/api/product/create":
+                self._api_create(payload.get("slug", ""), base)
+            elif u.path == "/api/contract/save":
+                self._api_contract_save(payload, base)
+            elif u.path == "/api/intent/save":
+                self._api_intent_save(payload, base)
             else:
                 self._err(404, "not found")
+        except AuthoringError as exc:
+            self._err(400, str(exc))  # visible validation error
         except KeyError:
             self._err(404, "data product not found")
         except Exception as exc:  # noqa: BLE001
@@ -166,10 +187,37 @@ class Handler(BaseHTTPRequestHandler):
         rel = gitops.write_plan(slug, plan.to_yaml(), base)
         self._json({"ok": True, "path": rel, "note": "commit on a branch and open a PR (CODEOWNERS-gated)"})
 
+    # -- authoring (write side) -----------------------------------------
+
+    def _api_create(self, slug: str, base: str) -> None:
+        result = authoring.create_product(base, slug)  # AuthoringError if exists/invalid
+        self._json({"ok": True, **result})
+
+    def _api_contract_save(self, payload: dict, base: str) -> None:
+        slug = payload.get("slug", "")
+        kind = payload.get("kind", "")
+        fields = payload.get("fields", [])
+        if not authoring.product_exists(base, slug):
+            return self._err(404, f"data product {slug!r} does not exist; create it first")
+        rel = authoring.save_contract(base, slug, kind, fields)  # AuthoringError -> 400
+        # Return the freshly re-planned product so the UI updates conformance now.
+        self._json({"ok": True, "path": rel, "product": _product_payload(slug, base)})
+
+    def _api_intent_save(self, payload: dict, base: str) -> None:
+        slug = payload.get("slug", "")
+        steps = payload.get("steps", [])
+        if not authoring.product_exists(base, slug):
+            return self._err(404, f"data product {slug!r} does not exist; create it first")
+        rel = authoring.save_intent(base, slug, steps)  # AuthoringError -> 400
+        self._json({"ok": True, "path": rel, "product": _product_payload(slug, base)})
+
 
 def serve(host: str = "127.0.0.1", port: int = 8090, base_dir: str = ".") -> None:
     Handler.ctx = _Ctx(base_dir)
-    httpd = ThreadingHTTPServer((host, port), Handler)
+    # Single-threaded on purpose: this is a local single-user tool, and the
+    # embedded DuckDB used by verify is not safe under concurrent request
+    # threads. Requests serialize (each is fast); no cross-thread native crashes.
+    httpd = HTTPServer((host, port), Handler)
     print(f"Covenant workbench on http://{host}:{port}  (contracts: {Handler.ctx.base_dir})")
     if host not in ("127.0.0.1", "localhost", "::1"):
         print("WARNING: bound to a non-loopback address.")

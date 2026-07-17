@@ -52,8 +52,27 @@ deterministic planner ships today; an agent would propose steps validated by the
 same verifier) and a live Spark/Argo cluster run (the artifact is generated;
 running it needs a cluster). Details in the vision doc §10.
 
+## No-code authoring (in the workbench)
+
+`covenant serve` is a full authoring UI, not a read-only demo. You can:
+
+- **Create a data product** (`domain/data_product`) — writes skeleton ODCS
+  contracts + an empty intent into `covenant-contracts/`.
+- **Edit the source and target contracts** as structured fields: add, remove,
+  rename, and reorder fields; change data types; toggle nullable/required; set or
+  clear primary keys.
+- **Edit the pipeline intent**: add/remove/reorder transform steps and their
+  parameters.
+- **Save** — atomic writes into the local GitOps tree (review and commit via a
+  pull request; the tool never pushes or deploys).
+- **Re-validate and verify immediately** after saving — the same planner/verify
+  pipeline the CLI uses. Invalid contracts cannot be saved without a visible
+  explanation.
+
 ## Security
 
 Local single-user tool. `covenant serve` binds `127.0.0.1`, rejects non-loopback
-Host headers, and caps payloads. It reads the committed `covenant-contracts` tree
-and can write a plan file (a PR-ready change); it performs no production actions.
+Host headers, caps payloads, and runs single-threaded (the embedded DuckDB used
+by verify is not safe under concurrent request threads). It reads and writes only
+inside the local `covenant-contracts` tree; it performs no Git push, remote
+access, or deployment.
